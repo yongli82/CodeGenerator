@@ -1,0 +1,23 @@
+{
+    "name" : "roleconfig",
+    "title" : "角色管理",
+    "navigation" : "首页 > 系统管理 > 角色管理",
+    "url" : "/pc/expense/roleconfig",
+    "search" : [
+        [{"label": "角色类型", "type" : "select", "id" : "q-role-type", "options" : ["0|全部", "1|发票接口人"]},
+         {"label" : "城市", "type" : "suggest", "id" : "q-city", "suggest-type" : "city"}],
+        [{"label": "接口人", "type" : "suggest", "id" : "q-worker", "suggest-type" : "worker"},
+            {}]
+    ],
+    "list" : {
+        "title" : "角色列表",
+        "table_url" : "/pc/expense/role/list",
+        "attributes" : ["recordId|id", "roleId", "roleName", "cityId", "cityName", "workNo", "workName"],
+        "columns" :[
+            {"title" : "角色", "property" : "roleName"},
+            {"title" : "城市", "property" : "cityName"},
+            {"title" : "接口人", "property" : "workName"},
+            {"title" : "操作", "action" : ["edit_role|编辑", "delete_role|删除"]}
+        ]
+    }
+}
