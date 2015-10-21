@@ -30,28 +30,8 @@ sys.setdefaultencoding('utf-8')
 import ExcelUtil
 from jinja2 import Template
 import re
+import copy
 
-
-temp = """
-DROP TABLE IF EXISTS `{{table_name}}`;
-CREATE TABLE `{{table_name}}` (
-    {% for item in columns %}
-    {% if item[2] == "yes" %}
-    `{{ item[0].strip() }}` {{ item[1] }} NOT NULL AUTO_INCREMENT COMMENT '{{ item[4] }}',
-    {% elif item[3].strip() != "" %}
-    `{{ item[0].strip() }}` {{ item[1] }} NOT NULL DEFAULT {{ item[3] }} COMMENT '{{ item[4] }}',
-    {% else %}
-    `{{ item[0].strip()  }}` {{ item[1] }} COMMENT '{{ item[4] }}',
-    {% endif %}
-    {% endfor %}
-    PRIMARY KEY (`Id`),
-    {% for key in keys %}
-    {{ key }},
-    {% endfor %}
-    KEY IX_UpdateTime(`UpdateTime`),
-    KEY IX_AddTime(`AddTime`)
-) COMMENT '{{ table_comment }}' ENGINE=InnoDB DEFAULT CHARSET=utf8;
-"""
 
 system_table_names = ['FC_AccountingAccessToken',
 'FC_AccountingDimensionConfig',
@@ -60,58 +40,84 @@ system_table_names = ['FC_AccountingAccessToken',
 'FC_PaymentType'
 ]
 
-t = Template(temp)
+class TableColumn(object):
+    def __init__(self, column_name, column_type, column_auto, column_default, column_desc):
+        self.column_name = column_name.strip()
+        self.column_type = column_type.strip()
+        self.column_auto = column_auto.strip()
+        self.column_default = column_default.strip()
+        self.column_desc = column_desc.strip()
 
-table_name = None
-table_comment = None
-columns = []
+class TableInfo(object):
+    def __init__(self, table_name, table_comment, columns=[]):
+        self.table_name = table_name
+        self.table_comment = table_comment
+        self.columns = columns
+        self.keys = []
 
-create_table_sqls = []
+    def has_column(self, column_name):
+        for column in self.columns:
+            if column.column_name == column_name:
+                return True
+        return False
 
-columns = ExcelUtil.generate_columns('A', 'F')
-print columns
-data_grid = ExcelUtil.read_excel_with_head(u"财务账务表.xlsx", u"表", columns)
+    def create_keys(self):
+        self.keys = []
+        if self.has_column("OutBizId") and self.has_column("BusinessSource") and self.has_column("BusinessType"):
+            self.keys.append("UNIQUE KEY UX_OutBiz(`OutBizId`,`BusinessSource`,`BusinessType`)")
+        if self.has_column("CustomerId"): self.keys.append("KEY IX_CustomerId(`CustomerId`)")
+        if self.has_column("SchemaId"): self.keys.append("KEY IX_SchemaId(`SchemaId`)")
+        if self.has_column("ShopId"): self.keys.append("KEY IX_ShopId(`ShopId`)")
+        if self.has_column("DailyId"): self.keys.append("KEY IX_DailyId(`DailyId`)")
+        if self.has_column("MonthlyId"): self.keys.append("KEY IX_MonthlyId(`MonthlyId`)")
+        if self.has_column("DetailId"): self.keys.append("KEY IX_DetailId(`DetailId`)")
 
-start_columns = False
+    def render(self):
+        self.create_keys()
+        temp = """
+DROP TABLE IF EXISTS `{{table_name}}`;
+CREATE TABLE `{{table_name}}` (
+    {% for item in columns -%}
+    {% if item.column_auto == "yes" -%}
+    `{{ item.column_name }}` {{ item.column_type }} NOT NULL AUTO_INCREMENT COMMENT '{{ item.column_desc }}',
+    {% elif item.column_default != "" -%}
+    `{{ item.column_name }}` {{ item.column_type }} NOT NULL DEFAULT {{ item.column_default }} COMMENT '{{ item.column_desc }}',
+    {% else -%}
+    `{{ item.column_name  }}` {{ item.column_type }} COMMENT '{{ item.column_desc }}',
+    {% endif -%}
+    {% endfor -%}
+    PRIMARY KEY (`Id`),
+    {% for key in keys -%}
+    {{ key }},
+    {% endfor -%}
+    KEY IX_UpdateTime(`UpdateTime`),
+    KEY IX_AddTime(`AddTime`)
+) COMMENT '{{ table_comment }}' ENGINE=InnoDB DEFAULT CHARSET=utf8;
+"""
+        t = Template(temp)
+        sql = t.render(self.__dict__)
+        return sql
+
+    def copy(self):
+        return copy.copy(self)
 
 
-def create_table():
-    global columns
-    if table_name is not None:
-        # create the last table
-        print "create table %s" % table_name
-        keys = []
-        if has_column("OutBizId") and has_column("BusinessSource") and has_column("BusinessType"):
-            keys.append("UNIQUE KEY UX_OutBiz(`OutBizId`,`BusinessSource`,`BusinessType`)")
-        if has_column("CustomerId"): keys.append("KEY IX_CustomerId(`CustomerId`)")
-        if has_column("SchemaId"): keys.append("KEY IX_SchemaId(`SchemaId`)")
-        if has_column("ShopId"): keys.append("KEY IX_ShopId(`ShopId`)")
-        if has_column("DailyId"): keys.append("KEY IX_DailyId(`DailyId`)")
-        if has_column("MonthlyId"): keys.append("KEY IX_MonthlyId(`MonthlyId`)")
-        if has_column("DetailId"): keys.append("KEY IX_DetailId(`DetailId`)")
-        create_table_sql = t.render({'table_name': table_name, 'table_comment': table_comment, 'columns': columns, 'keys': keys})
-        create_table_sql = re.sub(r"^\s*$\n", "", create_table_sql, flags=re.M)
-        #print create_table_sql
-        create_table_sqls.append(create_table_sql)
-        #print "=" * 60
-        columns = []
+def create_table_postfix():
+    table_postfix_list = []
+    for year in [2015]:
+        for month in range(10, 11, 1):
+            table_postfix = "_%s%02d" % (year, month)
+            table_postfix_list.append(table_postfix)
+    return table_postfix_list
 
-def has_column(column_name):
-    global columns
-    for column in columns:
-        if column[0] == column_name:
-            return True
-
-    return False
-
-table_postfix_list = []
-table_postfix_list.append("")
-for year in [2015]:
-    for month in range(10, 11, 1):
-        table_postfix = "_%s%02d" % (year, month)
-        table_postfix_list.append(table_postfix)
-
-for table_postfix in table_postfix_list:
+def read_table_info_from_excel(excel_file=u"财务账务表.xlsx", sheet=u"表"):
+    columns = ExcelUtil.generate_columns('A', 'F')
+    data_grid = ExcelUtil.read_excel_with_head(excel_file, sheet, columns)
+    start_columns = False
+    columns = []
+    table_info_list = []
+    table_name = None
+    column_name = None
     for record in data_grid:
         #字段   	 类型   	AutoIncr   	Default   	说明
         column_name = str(record.get(u"字段")).strip()
@@ -125,13 +131,11 @@ for table_postfix in table_postfix_list:
 
         if column_name.startswith("Table:"):
             if start_columns:
-                create_table()
+                table_info_list.append(TableInfo(table_name, table_comment, columns))
             start_columns = False
             values = column_name.split(":")
             table_name = values[1].strip()
             table_comment = values[2].strip()
-            table_name = table_name + table_postfix
-            print "Table: " + table_name
         elif u"字段" in column_name:
             columns = []
             start_columns = True
@@ -141,7 +145,7 @@ for table_postfix in table_postfix_list:
                 start_columns = False
                 #if has_column("BusinessType") and not has_column("BusinessSource"):
                 #    columns.insert(1, ("BusinessSource", "tinyint(4)", "no", "0", "数据来源: 1天玑 2账务 3结算 4推广 5支付中心"))
-                create_table()
+                table_info_list.append(TableInfo(table_name, table_comment, columns))
             else:
                 if column_name == "BusinessType":
                     column_desc = "业务类型: 1团购, 2预约预订, 3结婚亲子, 4储值卡, 5广告, 6闪惠, 7费用, 8闪付, 9电影, 10点菜, 11KTV预订, 12点付宝"
@@ -173,14 +177,35 @@ for table_postfix in table_postfix_list:
                 elif "timestamp" == column_type.lower() and column_default == "":
                     column_default = "'0000-00-00 00:00:00'"
 
-                columns.append((column_name, column_type, column_auto, column_default, column_desc))
+                columns.append(TableColumn(column_name, column_type, column_auto, column_default, column_desc))
+    return table_info_list
+
+def write_file(table_sqls, file_name):
+    content = "\n\n".join(table_sqls, )
+    with open(file_name, 'wb') as f:
+        f.write(content)
+        f.flush()
+        f.close()
+    os.system("open %s" % file_name)
+
+def create_table_sqls():
+    monthly_table_sqls = []
+    system_table_sqls = []
+    table_info_list = read_table_info_from_excel()
+    table_postfix_list = create_table_postfix()
+    for table_info in table_info_list:
+        if table_info.table_name in system_table_names:
+            sql = table_info.render()
+            system_table_sqls.append(sql)
+        else:
+            for postfix in table_postfix_list:
+                monthly_table_info = table_info.copy()
+                monthly_table_info.table_name = monthly_table_info.table_name + postfix
+                sql = monthly_table_info.render()
+                monthly_table_sqls.append(sql)
+
+    write_file(monthly_table_sqls, "monthly_table.sql")
+    write_file(system_table_sqls, "system_table.sql")
 
 
-content = "\n\n".join(create_table_sqls)
-
-with open("table.sql", 'wb') as f:
-    f.write(content)
-    f.flush()
-    f.close()
-
-os.system("open table.sql")
+create_table_sqls()
