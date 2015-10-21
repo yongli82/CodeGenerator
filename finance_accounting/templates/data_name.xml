@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="{{ data_name }}">
+
+    <typeAlias alias="{{ data_name }}Data" type="{{ project_package }}.api.datas.{{ data_name }}Data"/>
+    <resultMap id="{{ data_name|lower0 }}Data" class="{{ data_name }}Data">
+            {% for column in columns -%}
+            <result property="{{ column.java_name }}" column="{{ column.name }}"/>
+            {% endfor %}
+        </resultMap>
+
+    <insert id="insert{{ data_name }}" parameterClass="map">
+        <![CDATA[
+            INSERT INTO {{ table_name }} (
+            {% for column in columns -%}
+            {{ column.name }}{% if not loop.last %},{% endif %}
+            {% endfor -%}
+        ) VALUES (
+            {% for column in columns -%}
+            #data.{{ column.java_name }}#{% if not loop.last %},{% endif %}
+            {% endfor -%}
+        )
+        ]]>
+    <selectKey resultClass="java.lang.Integer" keyProperty="id">
+        <![CDATA[
+            SELECT @@IDENTITY AS id
+        ]]>
+    </selectKey>
+    </insert>
+
+    <select id="load{{ data_name }}ById" resultMap="{{ data_name|lower0 }}Data" parameterClass="map">
+        SELECT
+        {% for column in columns -%}
+        {{ column.name }}{% if not loop.last %},{% endif %}
+        {% endfor -%}
+        FROM {{ table_name }}
+        WHERE Id = #id#
+    </select>
+
+    <delete id="delete{{ data_name }}ById" parameterClass="map">
+        DELETE
+        FROM {{ table_name }}
+        WHERE Id = #id#
+    </delete>
+
+</sqlMap>
+

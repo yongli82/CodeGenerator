@@ -1,0 +1,7 @@
+    <bean id="{{ data_name|lower0 }}Service" class="com.dianping.dpsf.spring.ProxyBeanFactory" init-method="init">
+        <property name="serviceName" value="http://service.dianping.com/{{ service_uri_context }}/{{ data_name }}Service_1.0.0" />
+        <property name="iface" value="{{ project_package }}.api.{{ data_name }}Service" />
+        <property name="serialize" value="hessian" />
+        <property name="callMethod" value="sync" />
+        <property name="timeoutRetry" value="true"/>
+    </bean>

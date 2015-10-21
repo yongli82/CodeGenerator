@@ -53,6 +53,13 @@ CREATE TABLE `{{table_name}}` (
 ) COMMENT '{{ table_comment }}' ENGINE=InnoDB DEFAULT CHARSET=utf8;
 """
 
+system_table_names = ['FC_AccountingAccessToken',
+'FC_AccountingDimensionConfig',
+'FC_CollectionType',
+'FC_JeHistory',
+'FC_PaymentType'
+]
+
 t = Template(temp)
 
 table_name = None
@@ -99,8 +106,8 @@ def has_column(column_name):
 
 table_postfix_list = []
 table_postfix_list.append("")
-for year in [2015, 2016]:
-    for month in range(1, 13, 1):
+for year in [2015]:
+    for month in range(10, 11, 1):
         table_postfix = "_%s%02d" % (year, month)
         table_postfix_list.append(table_postfix)
 

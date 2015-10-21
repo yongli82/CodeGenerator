@@ -1,0 +1,2 @@
+    <bean id="{{ data_name|lower0 }}Service" class="{{ project_package }}.biz.impl.{{ data_name}}ServiceObject">
+    </bean>

@@ -1,0 +1,8 @@
+    <bean id="{{ data_name|lower0 }}Dao" parent="parentDao">
+        <property name="proxyInterfaces" value="{{ project_package }}.biz.dao.{{ data_name }}Dao" />
+        <property name="target">
+            <bean parent="fsMain.daoRealizeTarget">
+                <constructor-arg value="{{ data_name}}" />
+            </bean>
+        </property>
+    </bean>

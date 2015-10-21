@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, Template
 import re
 import logging
 
@@ -58,19 +58,35 @@ def generate_file(env, variables, template_file, destination, needMergeBlankLine
             f.write(source)
     logging.info("Generate file: %s" % destination)
 
-def insert_content(file_path, append, before=None, after=None):
+def insert_content(file_path, insert, before=None, after=None):
     content = open(file_path).read()
     if before:
         index = content.find(before)
-        content = content[0:index] + append + content[index:]
+        content = content[0:index] + insert + content[index:]
 
     if after:
         index = content.find(after)
-        content = content[0:index + len(after)] + append + content[index + len(after):]
+        content = content[0:index + len(after)] + insert + content[index + len(after):]
 
     with open(file_path, 'wb') as f:
             f.write(content)
 
+
+def insert_content_template(variables, file_path, insert, before=None, after=None):
+    file_path = Template(file_path).render(variables)
+    insert = Template(insert).render(variables)
+
+    content = open(file_path).read()
+    if before:
+        index = content.find(before)
+        content = content[0:index] + insert + content[index:]
+
+    if after:
+        index = content.find(after)
+        content = content[0:index + len(after)] + insert + content[index + len(after):]
+
+    with open(file_path, 'wb') as f:
+            f.write(content)
 
 def getClassFromTableName(tableName):
     vn = []
