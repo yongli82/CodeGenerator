@@ -28,7 +28,7 @@ def convert_db_type_to_java(dbtype):
 		return "String"
 	if dbtype.startswith('DECIMAL'):
 		return "BigDecimal"
-	if dbtype.startswith('TIMESTAMP'):
+	if dbtype.startswith('TIMESTAMP') or dbtype.startswith('DATE') or dbtype.startswith('DATETIME'):
 		return "Date"
 	return dbtype
 

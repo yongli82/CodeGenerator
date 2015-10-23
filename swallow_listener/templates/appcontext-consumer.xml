@@ -1,0 +1,6 @@
+    <bean id="{{ topic_name|lower0 }}Listener" init-method="init" class="{{ project_package }}.mq.listener.{{ topic_name }}Listener">
+        <property name="topic" value="${{ '{' }}{{ topic_lion }}{{ '}' }}"/>
+        <property name="consumerId" value="${{ '{' }}{{ customer_id_lion }} {{ '}' }}"/>
+        <property name="consumerCount" value="12"/>
+    </bean>
+

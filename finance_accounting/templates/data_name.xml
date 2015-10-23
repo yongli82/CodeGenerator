@@ -13,17 +13,28 @@
         <![CDATA[
             INSERT INTO {{ table_name }} (
             {% for column in columns -%}
+            {% if column.name != "Id" -%}
             {{ column.name }}{% if not loop.last %},{% endif %}
+            {% endif -%}
             {% endfor -%}
         ) VALUES (
             {% for column in columns -%}
+            {% if column.java_name != "id" -%}
+                {% if column.java_name in ['addTime', 'updateTime'] -%}
+            NOW()#{% if not loop.last %},{% endif %}
+                {% elif column.java_name in ['recordStatus'] -%}
+            1#{% if not loop.last %},{% endif %}
+                {% else -%}
             #data.{{ column.java_name }}#{% if not loop.last %},{% endif %}
+                {% endif -%}
+            {% endif -%}
             {% endfor -%}
         )
+        ON DUPLICATE KEY UPDATE Id=LAST_INSERT_ID(Id), {% if "Daily" in table_name or "Monthly" in table_name %}Amount = Amount + #data.amount#,{% endif %} UpdateTime=NOW()
         ]]>
     <selectKey resultClass="java.lang.Integer" keyProperty="id">
         <![CDATA[
-            SELECT @@IDENTITY AS id
+            SELECT @@IDENTITY AS Id
         ]]>
     </selectKey>
     </insert>
