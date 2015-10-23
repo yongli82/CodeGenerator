@@ -17,16 +17,16 @@
             {{ column.name }}{% if not loop.last %},{% endif %}
             {% endif -%}
             {% endfor -%}
-        ) VALUES (
+            ) VALUES (
             {% for column in columns -%}
             {% if column.java_name != "id" -%}
-                {% if column.java_name in ['addTime', 'updateTime'] -%}
-            NOW()#{% if not loop.last %},{% endif %}
-                {% elif column.java_name in ['recordStatus'] -%}
-            1#{% if not loop.last %},{% endif %}
-                {% else -%}
+            {% if column.java_name in ['addTime', 'updateTime'] -%}
+            NOW(){% if not loop.last %},{% endif %}
+            {% elif column.java_name in ['recordStatus'] -%}
+            1{% if not loop.last %},{% endif %}
+            {% else -%}
             #data.{{ column.java_name }}#{% if not loop.last %},{% endif %}
-                {% endif -%}
+            {% endif -%}
             {% endif -%}
             {% endfor -%}
         )
@@ -38,12 +38,16 @@
         ]]>
     </selectKey>
     </insert>
-
-    <select id="load{{ data_name }}ById" resultMap="{{ data_name|lower0 }}Data" parameterClass="map">
-        SELECT
+    
+    <sql id="{{ data_name }}Columns">
         {% for column in columns -%}
         {{ column.name }}{% if not loop.last %},{% endif %}
         {% endfor -%}
+    </sql>
+
+    <select id="load{{ data_name }}ById" resultMap="{{ data_name|lower0 }}Data" parameterClass="map">
+        SELECT
+        <include refid="{{ data_name }}Columns"></include>
         FROM {{ table_name }}
         WHERE Id = #id#
     </select>
@@ -53,6 +57,86 @@
         FROM {{ table_name }}
         WHERE Id = #id#
     </delete>
+    
+    <sql id="search{{ data_name }}Criteria">
+        {% for column in columns -%}
+        {% if column.java_type == "Date" -%}
+        <isNotNull property="searchBean.{{ column.java_name }}" prepend="and">
+             {{ column.name }} = #searchBean.{{ column.java_name }}#
+        </isNotNull>
+        <isNotNull property="searchBean.{{ column.java_name }}From" prepend="and">
+             {{ column.name }} &gt;= #searchBean.{{ column.java_name }}From#
+        </isNotNull>
+        <isNotNull property="searchBean.{{ column.java_name }}To" prepend="and">
+             {{ column.name }} &lt;= #searchBean.{{ column.java_name }}To#
+        </isNotNull>
+        {% elif column.java_type == "int" or column.java_type == "long" or column.java_type == "Integer" or column.java_type == "Long" -%}
+        <isNotEqual property="searchBean.{{ column.java_name }}" prepend="and" compareValue="0">
+            {{ column.name }} = #searchBean.{{ column.java_name }}#
+        </isNotEqual>
+        {% else -%}
+        <isNotNull property="searchBean.{{ column.java_name }}" prepend="and">
+             {{ column.name }} = #searchBean.{{ column.java_name }}#
+        </isNotNull>
+        {% endif -%}
+        {% endfor -%}
+    </sql>
+    
+    <select id="query{{ data_name }}" resultMap="{{ data_name|lower0 }}Data" parameterClass="map">
+        SELECT
+        <include refid="{{ data_name }}Columns"></include>
+        FROM {{ table_name }}
+        WHERE 1 = 1
+        <include refid="search{{ data_name }}Criteria"></include>
+    </select>
+    
+    <select id="paginate{{ data_name }}" resultMap="{{ data_name|lower0 }}Data" parameterClass="map">
+        SELECT
+        <include refid="{{ data_name }}Columns"></include>
+        FROM {{ table_name }}
+        WHERE 1 = 1
+        <include refid="search{{ data_name }}Criteria"></include>
+    </select>
+    
+    <select id="paginate{{ data_name }}_COUNT" resultClass="int" parameterClass="map">
+        SELECT
+        COUNT(1)
+        FROM {{ table_name }}
+        WHERE 1 = 1
+        <include refid="search{{ data_name }}Criteria"></include>
+    </select>
+    
+    <sql id="update{{ data_name }}Columns">
+        UpdateTime = NOW()
+        {% for column in columns -%}
+        {% if column.name != "Id" and column.name != "UpdateTime" -%}
+        {% if column.java_type == "int" or column.java_type == "long" or column.java_type == "Integer" or column.java_type == "Long" -%}
+        <isNotEqual property="data.{{ column.java_name }}" prepend="," compareValue="0">
+            {{ column.name }} = #data.{{ column.java_name }}#
+        </isNotEqual>
+        {% else -%}
+        <isNotNull property="searchBean.{{ column.java_name }}" prepend=",">
+             {{ column.name }} = #searchBean.{{ column.java_name }}#
+        </isNotNull>
+        {% endif -%}
+        {% endif -%}
+        {% endfor -%}
+    </sql>
+    
+    <update id="update{{ data_name }}ById" parameterClass="map">
+        UPDATE {{ table_name }}
+        SET
+        <include refid="update{{ data_name }}Columns"></include>
+        WHERE Id = #data.id#
+    </update>
+    
+    <update id="update{{ data_name }}BySearchBean" parameterClass="map">
+        UPDATE {{ table_name }}
+        SET
+        <include refid="update{{ data_name }}Columns"></include>
+        WHERE 1=1
+        <include refid="search{{ data_name }}Criteria"></include>
+    </update>
 
 </sqlMap>
 

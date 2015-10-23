@@ -21,5 +21,4 @@ public class {{ data_name }}Data implements Serializable {
         this.{{ column.java_name }} = {{ column.java_name }};
     }
     {% endfor %}
-
 }

@@ -1,2 +1,2 @@
-                    <entry key="http://service.dianping.com/{{ service_uri_context }}/{{ data_name }}Service_1.0.0" value-ref="{{ data_name|lower0 }}Service"/>
-
+        <entry key="http://service.dianping.com/{{ service_uri_context }}/{{ data_name }}Service_1.0.0" value-ref="{{ data_name|lower0 }}Service"/>
+            

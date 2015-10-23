@@ -56,7 +56,6 @@ def get_table_info(metadata, table_name):
             'type': column.type,
             'java_type' : yyutil.convert_db_type_to_java(str(column.type))
             })
-
     data_name = table_name.replace("FC_", "").replace("_201510","")
     table_name = table_name.replace("_201510","_$yearMonth$")
     if "_$yearMonth$" in table_name:
@@ -171,6 +170,7 @@ def get_generate_mapping():
         Mapping(target_file="{{ biz_resources_dir }}/config/sqlmap/sqlmap-config.xml", template_file="sqlmap-config.xml", action=Mapping.ACTION_INSERT, before="</sqlMapConfig>"),
         Mapping(target_file="{{ biz_resources_dir }}/config/sqlmap/{{ data_name }}/{{ data_name }}.xml", template_file="data_name.xml", action=Mapping.ACTION_CREATE),
         Mapping(target_file="{{ api_java_dir }}/datas/{{ data_name }}Data.java", template_file="DaoData.java", action=Mapping.ACTION_CREATE),
+        Mapping(target_file="{{ api_java_dir }}/beans/{{ data_name }}SearchBean.java", template_file="SearchBean.java", action=Mapping.ACTION_CREATE),
         Mapping(target_file="{{ biz_java_dir }}/dao/{{ data_name }}Dao.java", template_file="Dao.java", action=Mapping.ACTION_CREATE),
         Mapping(target_file="{{ biz_test_dir }}/dao/{{ data_name }}DaoTest.java", template_file="DAOTest.java", action=Mapping.ACTION_CREATE),
         Mapping(target_file="{{ biz_resources_dir }}/config/spring/local/appcontext-dao-fs.xml", template_file="appcontext-dao-fs.xml", action=Mapping.ACTION_INSERT, before="</beans>"),
@@ -190,6 +190,12 @@ if __name__ == "__main__":
     for table_name, table_info in table_info_map.items():
         #if table_name not in system_table_names and "payment" not in table_name.lower():
         #    continue
+        if table_name in system_table_names or ("payment" in table_name.lower() and "prepayment" not in table_name.lower()):
+            continue
+        if re.match(r".*\d+$", table_name) and not table_name.endswith("201510"):
+            continue
+        if not table_name.startswith("FC_BadDebtDetail"):
+            continue
         logging.info("table:%s" % table_name)
         variables = {}
         variables.update(project_info)

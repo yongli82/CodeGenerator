@@ -22,6 +22,8 @@ def upper_first(name):
 def convert_db_type_to_java(dbtype):
 	if dbtype.startswith('INTEGER') or dbtype.startswith("TINYINT"):
 		return "int"
+	if dbtype.startswith('BIGINT'):
+		return "long"
 	if dbtype.startswith('VARCHAR'):
 		return "String"
 	if dbtype.startswith('TEXT'):
