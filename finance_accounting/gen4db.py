@@ -175,6 +175,7 @@ def get_generate_mapping():
         Mapping(target_file="{{ biz_test_dir }}/dao/{{ data_name }}DaoTest.java", template_file="DAOTest.java", action=Mapping.ACTION_CREATE),
         Mapping(target_file="{{ biz_resources_dir }}/config/spring/local/appcontext-dao-fs.xml", template_file="appcontext-dao-fs.xml", action=Mapping.ACTION_INSERT, before="</beans>"),
         Mapping(target_file="{{ api_java_dir }}/{{ data_name}}Service.java", template_file="Service.java", action=Mapping.ACTION_CREATE),
+        Mapping(target_file="{{ biz_test_dir }}/impl/{{ data_name }}ServiceTest.java", template_file="ServiceTest.java", action=Mapping.ACTION_CREATE),
         Mapping(target_file="{{ biz_java_dir }}/impl/{{ data_name}}ServiceObject.java", template_file="ServiceObject.java", action=Mapping.ACTION_CREATE),
         Mapping(target_file="{{ biz_resources_dir }}/config/spring/local/appcontext-service.xml", template_file="biz-appcontext-service.xml", action=Mapping.ACTION_INSERT, before="</beans>"),
         Mapping(target_file="{{ service_resources_dir }}/config/spring/local/appcontext-service.xml", template_file="service-appcontext-service.xml", action=Mapping.ACTION_INSERT, before="</map>"),
