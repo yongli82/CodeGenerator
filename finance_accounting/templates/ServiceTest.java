@@ -2,6 +2,7 @@ package {{ project_package }}.biz.impl;
 
 import {{ project_package }}.api.datas.{{ data_name }}Data;
 import {{ project_package }}.api.beans.{{ data_name }}SearchBean;
+import {{ project_package }}.api.{{ data_name }}Service;
 import junit.framework.Assert;
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
