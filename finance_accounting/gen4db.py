@@ -191,12 +191,12 @@ if __name__ == "__main__":
     for table_name, table_info in table_info_map.items():
         #if table_name not in system_table_names and "payment" not in table_name.lower():
         #    continue
-        #if table_name in system_table_names or ("payment" in table_name.lower() and "prepayment" not in table_name.lower()):
-        #    continue
+        if table_name in system_table_names or ("payment" in table_name.lower() and "prepayment" not in table_name.lower()):
+            continue
         if re.match(r".*\d+$", table_name) and not table_name.endswith("201510"):
             continue
-        if not table_name.startswith("FC_PaymentCheck"):
-            continue
+        #if not table_name.startswith("FC_PaymentCheck"):
+        #    continue
         logging.info("table:%s" % table_name)
         variables = {}
         variables.update(project_info)
