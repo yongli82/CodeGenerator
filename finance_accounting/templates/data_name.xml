@@ -115,8 +115,8 @@
             {{ column.name }} = #data.{{ column.java_name }}#
         </isNotEqual>
         {% else -%}
-        <isNotNull property="searchBean.{{ column.java_name }}" prepend=",">
-             {{ column.name }} = #searchBean.{{ column.java_name }}#
+        <isNotNull property="data.{{ column.java_name }}" prepend=",">
+             {{ column.name }} = #data.{{ column.java_name }}#
         </isNotNull>
         {% endif -%}
         {% endif -%}
