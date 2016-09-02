@@ -21,15 +21,8 @@ logging.basicConfig(level=logging.INFO,
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     stream=sys.stdout)
 
-system_table_names = ['FC_AccountingAccessToken',
-                        'FC_AccountingDimensionConfig',
-                        'FC_CollectionType',
-                        'FC_JeHistory',
-                        'FC_PaymentType'
-                        ]
-
 def get_table_info_map():
-    engine = create_engine("mysql://aspnet_dianping:dp!@OpQW34bn@192.168.7.104:3306/BAFSAccounting")
+    engine = create_engine("mysql://aspnet_dianping:dp!@OpQW34bn@10.1.77.21:3306/BAFSPayPlatform")
     metadata = schema.MetaData(bind=engine, reflect=True)
 
     table_names = []
@@ -144,10 +137,10 @@ def generate(mapping_list, variables):
 
 def get_project_info():
     author="Yang Yongli"
-    project_name = "ba-finance-leopard-accounting"
-    project_base_dir = "/Users/yangyongli/Projects/ba-finance-leopard-accounting"
-    project_package = "com.dianping.ba.finance.leopard.accounting"
-    service_uri_context = "leopardAccountingService"
+    project_name = "ba-finance-cashier-bankorder"
+    project_base_dir = "/Users/yangyongli/Projects/ba-finance-cashier-bankorder"
+    project_package = "com.dianping.ba.finance.cashier.bankorder"
+    service_uri_context = "cashierBankOrderService"
     project_package_path = project_package.replace(".", "/")
     api_project_dir = os.path.join(project_base_dir, "%s-api" % project_name)
     biz_project_dir = os.path.join(project_base_dir, "%s-biz" % project_name)
@@ -189,12 +182,11 @@ if __name__ == "__main__":
     mapping_list = get_generate_mapping()
     table_info_map = get_table_info_map()
     for table_name, table_info in table_info_map.items():
-        if table_name in system_table_names or ("payment" in table_name.lower() and "prepayment" not in table_name.lower()):
+        if table_name not in ['PP_CashierReconciliation']:
             continue
-        if re.match(r".*\d+$", table_name) and not table_name.endswith("201510"):
-            continue
-        if not table_name.startswith("FC_TaskSchedule"):
-            continue
+        if table_name == 'PP_CashierReconciliation':
+            table_info["data_name"] = 'CashierReconciliation'
+
         logging.info("table:%s" % table_name)
         variables = {}
         variables.update(project_info)
