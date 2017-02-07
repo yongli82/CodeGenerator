@@ -183,7 +183,7 @@ if __name__ == "__main__":
     mapping_list = get_generate_mapping()
     table_info_map = get_table_info_map()
     for table_name, table_info in table_info_map.items():
-        if not table_name in ["FC_HttpApiConfig"]:
+        if not table_name in ["FC_StatisticsData", "FC_StatisticsDefine"]:
             continue
         logging.info("table:%s" % table_name)
         variables = {}
