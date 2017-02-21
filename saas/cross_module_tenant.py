@@ -29,7 +29,7 @@ def scan_java_api_method(file_path, arguments):
     if not class_name_list:
         return
     class_name = class_name_list[0]
-    method_define_list = re.findall(r"((?:public\s+)?([\w<>]+)\s+(\w+)\(([^\)]*)\)\s*;)", content)
+    method_define_list = re.findall(r"((?:public\s+)?([\w<>]+)\s+(\w+)\(([^\)]*)\)\s*(throws .*?)?;)", content)
     for method_define in method_define_list:
         result_type = method_define[1]
         method_name = method_define[2]
@@ -53,9 +53,22 @@ def modify_java_api_usage(file_path, arguments):
     content = read_file(file_path)
     for method in method_list:
         class_name = method.class_name
+        default_declare = class_name[0].lower() + class_name[1:]
         declare_list = re.findall(r"(?:(?:private|protected|\s)\s+)%s\s+(\w+);" % class_name, content)
+        if default_declare not in declare_list:
+            # 为继承的Action做特殊处理
+            declare_list.append(default_declare)
+
         for declare in declare_list:
             method_name = method.method_name
+            # 只处理含有tenant参数的函数
+            has_tenant = False
+            for parameter in method.parameters:
+                if "tenant" == parameter[1]:
+                    has_tenant = True
+                    break
+            if not has_tenant:
+                break
             matched_list = re.findall(r"(%s\.%s\((.*)\))" % (declare, method_name), content)
             for matched in matched_list:
                 usage = matched[0]
@@ -76,13 +89,24 @@ def modify_java_api_usage(file_path, arguments):
 # main
 #############
 if __name__ == "__main__":
+    # budget_method_list = []
+    # scan_module(module_name="expense",
+    #             func_match_pattern=is_java_api,
+    #             func_handler=scan_java_api_method,
+    #             args=(budget_method_list, "expense"))
+    # 
+    # scan_module(module_name="expense",
+    #             func_match_pattern=is_java_api_usage,
+    #             func_handler=modify_java_api_usage,
+    #             args=(budget_method_list, "expense"))
+    
     budget_method_list = []
-    scan_module(module_name="budget",
+    scan_module(module_name="expense",
                 func_match_pattern=is_java_api,
                 func_handler=scan_java_api_method,
-                args=(budget_method_list, "budget"))
+                args=(budget_method_list, "expense"))
 
-    scan_module(module_name="expense",
+    scan_module(module_name="workflow",
                 func_match_pattern=is_java_api_usage,
                 func_handler=modify_java_api_usage,
-                args=(budget_method_list, "expense"))
+                args=(budget_method_list, "workflow"))

@@ -47,7 +47,7 @@ def get_module_path(module):
     return module_path
 
 
-def scan_module(module_name, func_match_pattern, func_handler, args):
+def scan_module(module_name, func_match_pattern, func_handler, args=()):
     """
     扫描模块
     :param module_name: 模块
